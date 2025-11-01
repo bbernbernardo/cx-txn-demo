@@ -1,0 +1,12 @@
+cx_txn_dbt:
+  outputs:
+    dev:
+      dbname: cx_txn
+      host: cx-txn-db
+      pass: db_password
+      port: 5432
+      schema: demo
+      threads: 4
+      type: postgres
+      user: db_user
+  target: dev

@@ -68,6 +68,19 @@ services:
   #   networks:
   #     - cx-txn-network
     
+  dbt:
+    container_name: dbt
+    image: ghcr.io/dbt-labs/dbt-postgres:1.9.latest
+    volumes:
+      - ./dbt/cx_txn:/usr/app
+    working_dir: /usr/app
+    depends_on:
+      - cx-txn-db
+    networks:
+      - cx-txn-network
+    command: init cx_txn_dbt
+
+
 
   airflow:
     container_name: airflow
@@ -91,6 +104,8 @@ services:
       - cx-txn-network
     depends_on:
       - cx-txn-db
+
+
 
 networks:
   cx-txn-network:
