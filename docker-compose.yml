@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 
 services:
   cx-txn-db:
@@ -11,45 +11,45 @@ services:
       POSTGRES_USER: db_user
       POSTGRES_PASSWORD: db_password
     volumes:
-      - ./postgres/cx-txn/data:/var/lib/postgresql/data
-    networks:
-      - cx-txn-network
-    
-  airflow-db:
-    container_name: airflow_db
-    image: postgres:14.19
-    ports:
-      - 5434:5432
-    environment:
-      POSTGRES_DB: airflow
-      POSTGRES_USER: db_user
-      POSTGRES_PASSWORD: db_password
-    volumes:
-      - ./postgres/airflow/data:/var/lib/postgresql/data
+      - ./postgres/data:/var/lib/postgresql/data
+      - ./postgres/postgres_init.sql:/docker-entrypoint-initdb.d/postgres_init.sql
     networks:
       - cx-txn-network
 
-  airflow-init:
-    container_name: airflow_init
-    image: apache/airflow:latest
-    environment:
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://db_user:db_password@airflow-db:5432/airflow
-      _AIRFLOW_WWW_USER_CREATE: true
-      _AIRFLOW_WWW_USER_USERNAME: admin
-      _AIRFLOW_WWW_USER_PASSWORD: admin
-    volumes:
-      - ./airflow/dags:/opt/airflow/dags
-      - ./airflow/logs:/opt/airflow/logs
-    entrypoint: >
-      /bin/bash -c "
-      airflow db migrate && airflow standalone &&
-      airflow users create -r Admin -u admin -p admin -f admin -l User &&
-      exit 0
-      "
-    depends_on:
-      - airflow-db
-    networks:
-      - cx-txn-network
+    
+  # airflow-db:
+  #   container_name: airflow_db
+  #   image: postgres:14.19
+  #   ports:
+  #     - 5434:5432
+  #   environment:
+  #     POSTGRES_DB: airflow
+  #     POSTGRES_USER: db_user
+  #     POSTGRES_PASSWORD: db_password
+  #   volumes:
+  #     - ./postgres/airflow/data:/var/lib/postgresql/data
+  #   networks:
+  #     - cx-txn-network
+
+  # airflow-init:
+  #   container_name: airflow_init
+  #   image: apache/airflow:latest
+  #   environment:
+  #     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://db_user:db_password@airflow-db:5432/airflow
+  #     _AIRFLOW_WWW_USER_CREATE: true
+  #     _AIRFLOW_WWW_USER_USERNAME: admin
+  #     _AIRFLOW_WWW_USER_PASSWORD: admin
+  #   volumes:
+  #     - ./airflow/dags:/opt/airflow/dags
+  #     - ./airflow/logs:/opt/airflow/logs
+  #   entrypoint: >
+  #     /bin/bash -c "
+  #     airflow db migrate
+  #     "
+  #   depends_on:
+  #     - airflow-db
+  #   networks:
+  #     - cx-txn-network
 
   # x-airflow-common:
   #   &airflow-common
@@ -57,12 +57,11 @@ services:
   #   environment:
   #     &airflow-common-env
   #     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://db_user:db_password@airflow-db:5432/airflow
-  #     # _AIRFLOW_WWW_USER_CREATE: true
-  #     # _AIRFLOW_WWW_USER_USERNAME: admin
-  #     # _AIRFLOW_WWW_USER_PASSWORD: admin
   #   volumes:
   #     - ./airflow/dags:/opt/airflow/dags
   #     - ./airflow/logs:/opt/airflow/logs
+  #     - ./airflow/include:/include:/opt/airflow/include
+  #     - ./airflow/plugins:/plugins:/opt/airflow/plugins
   #   depends_on:
   #     &airflow-common-depends-on
   #     - airflow-db
@@ -72,18 +71,26 @@ services:
 
   airflow:
     container_name: airflow
-    image: apache/airflow:latest
+    image: apache/airflow:3.1.2rc1-python3.13
+    restart: always
     ports:
       - 8080:8080
     environment:
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://db_user:db_password@airflow-db:5432/airflow
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://db_user:db_password@cx-txn-db:5432/airflow
     volumes:
       - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/include:/include:/opt/airflow/include
+      - ./airflow/plugins:/plugins:/opt/airflow/plugins
+      - ./scripts:/opt/airflow/scripts
+    entrypoint: >
+      bash -c "
+      airflow db migrate && airflow api-server & airflow scheduler
+      "
     networks:
       - cx-txn-network
     depends_on:
-      - airflow-db
-      - airflow-init
+      - cx-txn-db
 
 networks:
   cx-txn-network:

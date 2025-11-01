@@ -142,8 +142,8 @@ def insert_valid_records(df, conn):
     return rejected_df
 
 
-
-conn = conn_db()
-df = extract_csv()
-rejected_df = insert_valid_records(df,conn)
-print(rejected_df)
+def main():
+    conn = conn_db()
+    df = extract_csv()
+    rejected_df = insert_valid_records(df,conn)
+    print(rejected_df)
