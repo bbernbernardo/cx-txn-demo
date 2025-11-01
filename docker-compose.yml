@@ -1,12 +1,90 @@
+version: '3'
+
 services:
-  postgres-db:
-    container_name: postgres_db
+  cx-txn-db:
+    container_name: cx_txn_db
     image: postgres:14.19
     ports:
-      - 5432:5432
+      - 5433:5432
     environment:
       POSTGRES_DB: cx_txn
       POSTGRES_USER: db_user
       POSTGRES_PASSWORD: db_password
     volumes:
-      - ./postgres/data:/var/lib/postgresql/data
+      - ./postgres/cx-txn/data:/var/lib/postgresql/data
+    networks:
+      - cx-txn-network
+    
+  airflow-db:
+    container_name: airflow_db
+    image: postgres:14.19
+    ports:
+      - 5434:5432
+    environment:
+      POSTGRES_DB: airflow
+      POSTGRES_USER: db_user
+      POSTGRES_PASSWORD: db_password
+    volumes:
+      - ./postgres/airflow/data:/var/lib/postgresql/data
+    networks:
+      - cx-txn-network
+
+  airflow-init:
+    container_name: airflow_init
+    image: apache/airflow:latest
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://db_user:db_password@airflow-db:5432/airflow
+      _AIRFLOW_WWW_USER_CREATE: true
+      _AIRFLOW_WWW_USER_USERNAME: admin
+      _AIRFLOW_WWW_USER_PASSWORD: admin
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+    entrypoint: >
+      /bin/bash -c "
+      airflow db migrate && airflow standalone &&
+      airflow users create -r Admin -u admin -p admin -f admin -l User &&
+      exit 0
+      "
+    depends_on:
+      - airflow-db
+    networks:
+      - cx-txn-network
+
+  # x-airflow-common:
+  #   &airflow-common
+  #   image: apache/airflow:latest
+  #   environment:
+  #     &airflow-common-env
+  #     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://db_user:db_password@airflow-db:5432/airflow
+  #     # _AIRFLOW_WWW_USER_CREATE: true
+  #     # _AIRFLOW_WWW_USER_USERNAME: admin
+  #     # _AIRFLOW_WWW_USER_PASSWORD: admin
+  #   volumes:
+  #     - ./airflow/dags:/opt/airflow/dags
+  #     - ./airflow/logs:/opt/airflow/logs
+  #   depends_on:
+  #     &airflow-common-depends-on
+  #     - airflow-db
+  #   networks:
+  #     - cx-txn-network
+    
+
+  airflow:
+    container_name: airflow
+    image: apache/airflow:latest
+    ports:
+      - 8080:8080
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://db_user:db_password@airflow-db:5432/airflow
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+    networks:
+      - cx-txn-network
+    depends_on:
+      - airflow-db
+      - airflow-init
+
+networks:
+  cx-txn-network:
+    driver: bridge
