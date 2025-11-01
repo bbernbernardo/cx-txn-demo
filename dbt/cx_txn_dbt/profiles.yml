@@ -2,7 +2,7 @@ cx_txn_dbt:
   outputs:
     dev:
       dbname: cx_txn
-      host: cx-txn-db
+      host: localhost
       pass: db_password
       port: 5432
       schema: demo
