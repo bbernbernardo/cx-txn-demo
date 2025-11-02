@@ -1,0 +1,6 @@
+selectors:
+  - name: cx_txn
+    description: All dbt objects related to Customer Transactions
+    definition:
+      union:
+        - "+tag:cx_txn"

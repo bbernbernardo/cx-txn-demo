@@ -1,4 +1,9 @@
-{{ config(materialized='incremental', unique_key='transaction_id') }}
+{{ config(
+    materialized='incremental', 
+    unique_key='transaction_id',
+    tags=['cx_txn']
+    ) 
+}}
 
 select
     t.transaction_id,

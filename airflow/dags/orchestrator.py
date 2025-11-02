@@ -6,7 +6,6 @@ from airflow.providers.standard.operators.python import PythonOperator
 
 
 sys.path.append('/opt/airflow/scripts')
-sys.path.append('/opt/airflow/data')
 
 import extract_data
 
@@ -29,5 +28,5 @@ dag = DAG(
 with dag:
     task1 = PythonOperator(
         task_id='ingest_data_task',
-        python_callable=extract_data.main()
+        python_callable=extract_data.main
     )

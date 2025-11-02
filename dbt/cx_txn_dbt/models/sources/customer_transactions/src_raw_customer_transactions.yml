@@ -1,0 +1,26 @@
+version: 2
+
+sources:
+  - name: demo
+    description: "Schema containing raw ingested CSV data"
+    schema: demo
+    tables:
+      - name: raw_customer_transactions
+        description: "Raw customer transactions table with all text fields"
+        columns:
+          - name: transaction_id
+            description: "Unique transaction identifier"
+          - name: customer_id
+            description: "Unique customer identifier"
+          - name: transaction_date
+            description: "Original transaction date as text"
+          - name: product_id
+            description: "Product identifier"
+          - name: product_name
+            description: "Product name as text"
+          - name: quantity
+            description: "Quantity purchased"
+          - name: price
+            description: "Price per unit"
+          - name: tax
+            description: "Tax amount"

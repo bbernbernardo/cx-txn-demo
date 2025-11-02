@@ -1,4 +1,8 @@
-{{ config(materialized='table') }}
+{{ config(
+    materialized='view',
+    tags=['cx_txn']
+    ) 
+}}
 
 select distinct
     customer_id

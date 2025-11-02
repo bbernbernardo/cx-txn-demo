@@ -1,3 +1,4 @@
+import sys
 import pandas as pd
 import psycopg2
 import os
@@ -6,8 +7,9 @@ from psycopg2.extras import execute_batch
 # ------------------------------------------------------------------------------
 # Configuration
 # ------------------------------------------------------------------------------
-
-CSV_FILE = os.path.join("..", "data", "customer_transactions.csv")
+sys.path.append('/import/csv')
+CSV_FILE = os.path.join(".", "customer_transactions.csv")
+print(f"CSV FILE PATH: {CSV_FILE}")
 
 DB_CONFIG = {
     "host": "localhost",

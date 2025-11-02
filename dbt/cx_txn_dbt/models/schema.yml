@@ -1,29 +1,17 @@
 version: 2
 
-sources:
-  - name: raw
-    description: "Raw source data loaded from CSV or external staging"
-    tables:
-      - name: raw_customer_transactions
-        description: "Raw transactional data from sales system"
-        columns:
-          - name: transaction_id
-            tests: [not_null, unique]
-          - name: transaction_date
-            tests: [not_null]
-
 models:
-  - name: stg_customer_transactions
-    description: "Staging model that cleans and casts raw customer transactions"
-    columns:
-      - name: transaction_id
-        tests: [not_null, unique]
-      - name: customer_id
-        tests: [not_null]
-      - name: product_id
-        tests: [not_null]
-      - name: transaction_date
-        tests: [not_null]
+  # - name: stg_customer_transactions
+  #   description: "Staging model that cleans and casts raw customer transactions"
+  #   columns:
+  #     - name: transaction_id
+  #       tests: [not_null, unique]
+  #     - name: customer_id
+  #       tests: [not_null]
+  #     - name: product_id
+  #       tests: [not_null]
+  #     - name: transaction_date
+  #       tests: [not_null]
 
   - name: dim_customer
     description: "Customer dimension"
@@ -52,9 +40,15 @@ models:
         tests: [not_null]
         
   # TO DO: Add dbt expectations
-  - name: stg_customer_transactions_valid
+  - name: stg_customer_transactions
     description: "Cleaned transactions with consistent data types"
     columns:
+      - name: customer_id
+        tests: [not_null]
+      - name: product_id
+        tests: [not_null]
+      - name: transaction_date
+        tests: [not_null]
       - name: transaction_id
         tests: [not_null, unique]
       - name: price

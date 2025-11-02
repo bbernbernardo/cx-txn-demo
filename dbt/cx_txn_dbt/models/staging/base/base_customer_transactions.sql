@@ -1,7 +1,15 @@
-{{ config(materialized='view') }}
+{{
+    config(
+        materialized='incremental',
+        incremental_strategy='delete+insert',
+        unique_key='transaction_id',
+        tags=['cx_txn']
+    )
+}}
+
 
 with raw as (
-    select * from {{ source('raw', 'raw_customer_transactions_raw') }}
+    select * from {{ source('demo', 'raw_customer_transactions') }}
 ),
 
 -- Attempt safe casting
@@ -47,10 +55,10 @@ cleaned as (
             else null
         end as tax_float,
 
-        case 
-            when try_cast(transaction_date as date) is not null then transaction_date::date
-            else null
-        end as transaction_date_casted
+        case
+            when transaction_date ~ '^\d{4}-\d{2}-\d{2}$' then transaction_date::date
+        else null
+end as transaction_date_casted
     from raw
 )
 
@@ -62,5 +70,10 @@ select
     product_name,
     quantity_int as quantity,
     price_float as price,
-    tax_float as tax
+    tax_float as tax,
+
+    -- technical fields
+    'csv' as record_source,
+    '{{invocation_id}}' as invocation_id,
+    '{{run_started_at}}' as dbt_load_time
 from cleaned

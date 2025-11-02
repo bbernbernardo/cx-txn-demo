@@ -41,7 +41,7 @@ services:
       # - ./airflow/include:/include:/opt/airflow/include
       # - ./airflow/plugins:/plugins:/opt/airflow/plugins
       - ./scripts:/opt/airflow/scripts
-      - ./data:/opt/airflow/data
+      - ./import/csv:/import/csv
     entrypoint: >
       bash -c "
       airflow db migrate && airflow api-server & airflow scheduler
