@@ -1,31 +1,33 @@
 import sys
+from  datetime import datetime
 from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.utils.dates import days_ago
+# from airflow.operators.python import PythonOperator
+from airflow.providers.standard.operators.python import PythonOperator
 
 
-sys.path.append('opt/airflow/scripts')
+sys.path.append('/opt/airflow/scripts')
+sys.path.append('/opt/airflow/data')
 
-def safe_main_collable():
-    from insert_data import main
-    return main()
+import extract_data
 
-defaule_args = {
+
+default_args = {
     'description': 'DAG to orchestrate the data pipeline',
     'depends_on_past': False,
-    'start_date': days_ago(1),
+    'start_date': datetime(2025, 11, 1),
+    'catchup': False,
 
 }
 
 dag = DAG(
     dag_id='demo-cx-txn',
     default_args=default_args,
-    schedule_interval=None,
+    schedule=None,
 
 )
 
 with dag:
     task1 = PythonOperator(
         task_id='ingest_data_task',
-        python_callable=safe_main_collable
+        python_callable=extract_data.main()
     )

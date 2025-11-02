@@ -1,11 +1,9 @@
-version: '3.8'
-
 services:
   cx-txn-db:
     container_name: cx_txn_db
     image: postgres:14.19
     ports:
-      - 5433:5432
+      - 5432:5432
     environment:
       POSTGRES_DB: cx_txn
       POSTGRES_USER: db_user
@@ -39,10 +37,11 @@ services:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://db_user:db_password@cx-txn-db:5432/airflow
     volumes:
       - ./airflow/dags:/opt/airflow/dags
-      - ./airflow/logs:/opt/airflow/logs
-      - ./airflow/include:/include:/opt/airflow/include
-      - ./airflow/plugins:/plugins:/opt/airflow/plugins
+      # - ./airflow/logs:/opt/airflow/logs
+      # - ./airflow/include:/include:/opt/airflow/include
+      # - ./airflow/plugins:/plugins:/opt/airflow/plugins
       - ./scripts:/opt/airflow/scripts
+      - ./data:/opt/airflow/data
     entrypoint: >
       bash -c "
       airflow db migrate && airflow api-server & airflow scheduler

@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS demo.raw_customer_transactions (
     tax TEXT
 );
 
--- CREATE USER db_airflow PASSWORD 'db_airflow';
--- CREATE DATABASE airflow OWNER db_airflow;
+CREATE USER db_airflow PASSWORD 'db_airflow';
+CREATE DATABASE airflow OWNER db_airflow;
 
-COPY demo.raw_customer_transactions(transaction_id,customer_id,transaction_date,product_id,product_name,quantity,price,tax) FROM '../data/customer_transactions.csv' DELIMITER ',' CSV HEADER;
+-- COPY demo.raw_customer_transactions(transaction_id,customer_id,transaction_date,product_id,product_name,quantity,price,tax) FROM '../data/customer_transactions.csv' DELIMITER ',' CSV HEADER;
