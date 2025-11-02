@@ -1,0 +1,40 @@
+version: 2
+
+sources:
+  - name: customer_transactions
+    description: Customer Transactions table from Postgres
+    tables:
+      - name: customer_transactions
+        database: demo
+        description: >
+          Customer Transactions Demo data
+        columns:
+          - name: transaction_id
+            description: Unique identifier for each transaction
+            data_type: int
+            data_tests:
+              - unique
+              - not_null
+          - name: customer_id
+            description: Unique identifier for each customer
+            data_type: int
+          - name: transaction_date
+            description: Date when the transaction occurred
+            data_type: date
+          - name: product_id
+            description: Unique identifier for each product
+            data_type: int
+            data_tests:
+              - not_null
+          - name: product_name
+            description: Name of the product
+            data_type: VARCHAR(300)
+          - name: quantity
+            description: Number of units sold
+            data_type: int
+          - name: price
+            description: Price of the product
+            data_type: float
+          - name: tax
+            description: Tax applied to the transaction
+            data_type: float
