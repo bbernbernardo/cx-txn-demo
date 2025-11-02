@@ -50,3 +50,20 @@ models:
         tests: [not_null, unique]
       - name: total_amount
         tests: [not_null]
+        
+  # TO DO: Add dbt expectations
+  - name: stg_customer_transactions_valid
+    description: "Cleaned transactions with consistent data types"
+    columns:
+      - name: transaction_id
+        tests: [not_null, unique]
+      - name: price
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+      - name: tax
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0

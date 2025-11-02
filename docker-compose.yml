@@ -15,6 +15,48 @@ services:
       - ./postgres/postgres_init.sql:/docker-entrypoint-initdb.d/postgres_init.sql
     networks:
       - cx-txn-network
+    
+  dbt:
+    container_name: dbt
+    image: ghcr.io/dbt-labs/dbt-postgres:1.9.latest
+    volumes:
+      - ./dbt/cx_txn:/usr/app
+    working_dir: /usr/app
+    depends_on:
+      - cx-txn-db
+    networks:
+      - cx-txn-network
+    command: init cx_txn_dbt
+
+
+  airflow:
+    container_name: airflow
+    image: apache/airflow:3.1.2rc1-python3.13
+    restart: always
+    ports:
+      - 8080:8080
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://db_user:db_password@cx-txn-db:5432/airflow
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/include:/include:/opt/airflow/include
+      - ./airflow/plugins:/plugins:/opt/airflow/plugins
+      - ./scripts:/opt/airflow/scripts
+    entrypoint: >
+      bash -c "
+      airflow db migrate && airflow api-server & airflow scheduler
+      "
+    networks:
+      - cx-txn-network
+    depends_on:
+      - cx-txn-db
+
+
+networks:
+  cx-txn-network:
+    driver: bridge
+
 
     
   # airflow-db:
@@ -67,46 +109,3 @@ services:
   #     - airflow-db
   #   networks:
   #     - cx-txn-network
-    
-  dbt:
-    container_name: dbt
-    image: ghcr.io/dbt-labs/dbt-postgres:1.9.latest
-    volumes:
-      - ./dbt/cx_txn:/usr/app
-    working_dir: /usr/app
-    depends_on:
-      - cx-txn-db
-    networks:
-      - cx-txn-network
-    command: init cx_txn_dbt
-
-
-
-  airflow:
-    container_name: airflow
-    image: apache/airflow:3.1.2rc1-python3.13
-    restart: always
-    ports:
-      - 8080:8080
-    environment:
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://db_user:db_password@cx-txn-db:5432/airflow
-    volumes:
-      - ./airflow/dags:/opt/airflow/dags
-      - ./airflow/logs:/opt/airflow/logs
-      - ./airflow/include:/include:/opt/airflow/include
-      - ./airflow/plugins:/plugins:/opt/airflow/plugins
-      - ./scripts:/opt/airflow/scripts
-    entrypoint: >
-      bash -c "
-      airflow db migrate && airflow api-server & airflow scheduler
-      "
-    networks:
-      - cx-txn-network
-    depends_on:
-      - cx-txn-db
-
-
-
-networks:
-  cx-txn-network:
-    driver: bridge
