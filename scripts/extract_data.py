@@ -3,12 +3,13 @@ import pandas as pd
 import psycopg2
 import os
 from psycopg2.extras import execute_batch
+import csv
 
-# ------------------------------------------------------------------------------
-# Configuration
-# ------------------------------------------------------------------------------
+
 sys.path.append('/import/csv')
 CSV_FILE = os.path.join(".", "customer_transactions.csv")
+# CSV_FILE = os.path.join("..", "import", "csv","customer_transactions.csv")
+
 print(f"CSV FILE PATH: {CSV_FILE}")
 
 DB_CONFIG = {
@@ -21,18 +22,39 @@ DB_CONFIG = {
 
 TARGET_TABLE = "demo.raw_customer_transactions"
 
-# ------------------------------------------------------------------------------
-# Step 1: Read CSV and ensure all columns are strings
-# ------------------------------------------------------------------------------
-
 def read_csv():
     # Read CSV file
+
     try:
-        df = pd.read_csv(CSV_FILE, dtype=str)
+        with open(CSV_FILE, mode='r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            headers = next(reader)  # first row = headers
+            rows = []
+
+            for row in reader:
+                cleaned_row = []
+                for value in row:
+                    if value is None:
+                        cleaned_row.append("")
+                        continue
+
+                    val = str(value).strip()
+
+                    # ✅ Convert values like '123.0' → '123' (but keep true decimals)
+                    if val.endswith(".0") and val.replace(".", "", 1).isdigit():
+                        val = val[:-2]
+
+                    cleaned_row.append(val)
+
+                rows.append(cleaned_row)
+
+        # Convert to DataFrame (all fields are strings)
+        df = pd.DataFrame(rows, columns=headers, dtype=str)
         return df
     except Exception as e:
         print(f"Unexpected error reading '{CSV_FILE}': {e}")
         raise
+
 
 
 def connect_to_db():
@@ -109,10 +131,9 @@ def insert_records(conn,records):
 
 
 def main():
-    # Strip whitespace and fill NaN with None
     df = read_csv()
     if not df.empty:
-        df = df.map(lambda x: str(x).strip() if pd.notnull(x) else None)
+        print (df)
         print(f"Loaded {len(df)} rows from {CSV_FILE}")
 
         # Convert DataFrame to list of tuples
@@ -129,3 +150,5 @@ def main():
                 conn.close()
     else:
         print(f"Source CSV {CSV_FILE} is empty. Nothing to do")
+
+# main()
