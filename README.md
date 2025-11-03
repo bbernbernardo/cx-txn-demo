@@ -1,50 +1,101 @@
-# cx-txn-demo
-Case study data pipeline using Airflow, dbt, and PostgreSQL to ingest, transform, and expose data
+# 🧱 CX Transaction Demo
 
+> **Case study data pipeline** using **Apache Airflow**, **dbt**, and **PostgreSQL** to ingest, transform, and expose transactional data.
 
-# !!!NOTE: Incomplete demo.
-# Major issue - Airflow DAG unable to orchestrate data pipeline.
-# Components work individualy and locally.
+---
 
+## ⚠️ Project Status
+
+> **NOTE:** This is an **incomplete demo**.  
+> The Airflow DAG currently fails to orchestrate the full data pipeline, although individual components (Airflow, dbt, and PostgreSQL) work correctly when run locally.
+
+---
+
+## Quick Start
+
+Start all containers (Airflow, dbt, and PostgreSQL):
+
+```bash
 docker-compose up
-# Will enable airflow and postgres containers. As well as dbt build run (initial set up)
+```
 
-# List of containers under cx-txn-db:
-# 1. cx_txn_db - Postgres DB
-# 2. dbt - dbt package
-# 3. airflow - Airflow container
+This command will:
+- Start the **Airflow** and **PostgreSQL** containers.
+- Initialize and run the **dbt** build for setup.
 
+---
 
-# Pipeline Flow
-# 1. extract_data.py will extract the CSV file and insert the records to demo.raw_customer_transactions postgres table.
-#       The table fields are all STRING to accommodate varying and inconsistent values.
-# 2. dbt 
-#       Source: Takes the raw demo.raw_customer_transactions postgres table as it is.
-#       Staging: Adds technical fields and separates Valid and Invalid records. Valid records will go to demo.stg_customer_transactions, and invalid records goes to demo.int_customer_transactions_invalid
-#       Marts:  dim and fact tables are created.
-#       Test: Leverages on built in generic test in schema definition.
-# 3. Airflow. Dags created for
-#       CSV Extraction
-#       dbt execution of Buil, Test, Full-Refresh, and Run incremental.
+## Components
 
+The project runs under the `cx-txn-db` Docker network and includes:
 
+| Container | Description |
+|------------|--------------|
+| **cx_txn_db** | PostgreSQL database |
+| **dbt** | dbt transformation and testing |
+| **airflow** | Apache Airflow orchestration |
 
-# Lots of TO DOs
-# 1. Security Improvement:
-#       a. Remove hard coded sensitive information and utilize env varialbes for variable definition e.g. db users, password, environments.
-#       b. Add secrets management
-# 2. HA:
-#       a. Separate Airflow services: DB, API Server and Workflow
-#       b. Improve services dependencies by adding helthchecks.
-#       c. Persist postgress data
-# 3. dbt:
-#       a. Improve data modeling by implementing Data Vault. Dependencies have been installed, and folder structures have been set up.
-#       b. Implement retries and Logging.
-#       c. Improve quality checks by adding dbt_expectations.
-#       d. Add dbt init like seed and dbt deps.
-# 4. Presentation layer - add dataset models for business logics and add visualization on top.
-# 5. Airflow
-#       a. Firstly, fix dags issues.
-#       b. Improve tasks dependencies and add retries.
-#       c. Add logging and notification
+---
 
+## Pipeline Flow
+
+1. **Extraction**
+   - `extract_data.py` extracts a CSV file and inserts records into the `demo.raw_customer_transactions` table.
+   - All fields are stored as **strings** to handle inconsistent values.
+
+2. **Transformation (dbt)**
+   - **Source**: Reads directly from `demo.raw_customer_transactions`.
+   - **Staging**:
+     - Adds technical fields.
+     - Splits valid and invalid records into:
+       - `demo.stg_customer_transactions`
+       - `demo.int_customer_transactions_invalid`
+   - **Marts**:
+     - Builds **dimension** and **fact** tables.
+   - **Testing**:
+     - Uses dbt’s built-in generic schema tests.
+
+3. **Orchestration (Airflow)**
+   - DAGs defined for:
+     - CSV Extraction  
+     - dbt Build  
+     - dbt Test  
+     - dbt Full Refresh  
+     - dbt Incremental Run  
+
+---
+
+## Future Improvements / TODOs
+
+### 1. Security
+- Replace hard-coded credentials with **environment variables**.
+- Integrate **secrets management** (e.g., Vault, AWS Secrets Manager).
+
+### 2. High Availability (HA)
+- Separate Airflow services: **DB**, **API Server**, and **Worker**.
+- Add **health checks** and improve service dependencies.
+- Persist PostgreSQL data volumes.
+
+### 3. dbt Enhancements
+- Implement **Data Vault** modeling (dependencies and structure already set up).
+- Add **retry logic** and **enhanced logging**.
+- Integrate **dbt-expectations** for data quality tests.
+- Include `dbt init`, `dbt seed`, and `dbt deps` workflows.
+
+### 4. Presentation Layer
+- Create business logic datasets for reporting.
+- Add **visualization** layer (e.g., Metabase, Superset, or Tableau).
+
+### 5. Airflow Improvements
+- Fix DAG orchestration issues.
+- Improve **task dependencies**, add **retries**, and enable **logging/notifications**.
+
+---
+
+## Tech Stack
+
+- **Apache Airflow**
+- **dbt**
+- **PostgreSQL**
+- **Docker Compose**
+- **Python 3**
