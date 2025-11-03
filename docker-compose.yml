@@ -13,11 +13,7 @@ services:
       - ./postgres/postgres_init.sql:/docker-entrypoint-initdb.d/postgres_init.sql
     networks:
       - cx-txn-network
-    # healthcheck:
-    #   test: ["CMD-SHELL", "pg_isready -U cx_txn"]
-    #   interval: 10s
-    #   timeout: 5s
-    #   retries: 5
+
     
   dbt:
     container_name: dbt
@@ -32,27 +28,6 @@ services:
       - cx-txn-network
     command: build
     
-    # entrypoint: ["/bin/bash", "-c"]
-    # command: ["dbt build"]
-  # dbt:
-  #   image: ghcr.io/dbt-labs/dbt-postgres:1.9.latest
-  #   container_name: dbt
-  #   depends_on:
-  #     - cx-txn-db
-  #     # cx-txn-db:
-  #     #   condition: service_healthy
-  #   # environment:
-  #   #   DBT_PROFILES_DIR: /usr/app
-  #   volumes:
-  #     - ./dbt/cx_txn_dbt:/usr/app  # <-- mount your dbt project folder here
-  #     - ./dbt/:/root/.dbt/
-  #   working_dir: /usr/app
-  #   networks:
-  #     - cx-txn-network
-  #   entrypoint: ["/bin/bash", "-c"]
-  #   command: ["tail -f /dev/null"]
-  #   # You can override command to run your models:
-  #   # command: ["dbt run"]
 
 
   airflow:
@@ -67,9 +42,6 @@ services:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
     volumes:
       - ./airflow/dags:/opt/airflow/dags
-      # - ./airflow/logs:/opt/airflow/logs
-      # - ./airflow/include:/include:/opt/airflow/include
-      # - ./airflow/plugins:/plugins:/opt/airflow/plugins
       - ./scripts:/opt/airflow/scripts
       - ./import/csv:/import/csv
       - ./dbt/cx_txn_dbt:/usr/app
@@ -86,56 +58,3 @@ services:
 networks:
   cx-txn-network:
     driver: bridge
-
-
-    
-  # airflow-db:
-  #   container_name: airflow_db
-  #   image: postgres:14.19
-  #   ports:
-  #     - 5434:5432
-  #   environment:
-  #     POSTGRES_DB: airflow
-  #     POSTGRES_USER: db_user
-  #     POSTGRES_PASSWORD: db_password
-  #   volumes:
-  #     - ./postgres/airflow/data:/var/lib/postgresql/data
-  #   networks:
-  #     - cx-txn-network
-
-  # airflow-init:
-  #   container_name: airflow_init
-  #   image: apache/airflow:latest
-  #   environment:
-  #     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://db_user:db_password@airflow-db:5432/airflow
-  #     _AIRFLOW_WWW_USER_CREATE: true
-  #     _AIRFLOW_WWW_USER_USERNAME: admin
-  #     _AIRFLOW_WWW_USER_PASSWORD: admin
-  #   volumes:
-  #     - ./airflow/dags:/opt/airflow/dags
-  #     - ./airflow/logs:/opt/airflow/logs
-  #   entrypoint: >
-  #     /bin/bash -c "
-  #     airflow db migrate
-  #     "
-  #   depends_on:
-  #     - airflow-db
-  #   networks:
-  #     - cx-txn-network
-
-  # x-airflow-common:
-  #   &airflow-common
-  #   image: apache/airflow:latest
-  #   environment:
-  #     &airflow-common-env
-  #     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://db_user:db_password@airflow-db:5432/airflow
-  #   volumes:
-  #     - ./airflow/dags:/opt/airflow/dags
-  #     - ./airflow/logs:/opt/airflow/logs
-  #     - ./airflow/include:/include:/opt/airflow/include
-  #     - ./airflow/plugins:/plugins:/opt/airflow/plugins
-  #   depends_on:
-  #     &airflow-common-depends-on
-  #     - airflow-db
-  #   networks:
-  #     - cx-txn-network
