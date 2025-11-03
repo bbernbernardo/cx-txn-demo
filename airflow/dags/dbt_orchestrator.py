@@ -4,8 +4,11 @@ from airflow import DAG
 from airflow.providers.docker.operators.docker import DockerOperator
 # from airflow.operators.python import PythonOperator
 from airflow.providers.standard.operators.python import PythonOperator
-from docker.type import Mount
+from docker.types import Mount
 
+sys.path.append('/opt/airflow/scripts')
+
+import extract_data
 
 default_args = {
     'description': 'DAG to orchestrate the data pipeline',
@@ -23,17 +26,13 @@ dag = DAG(
 )
 
 with dag:
-    task1 = PythonOperator(
-        task_id='ingest_csv',
-        python_callable=extract_data.main
-    )
 
-    Task2 = DockerOperator(
+    task1 = DockerOperator(
         task_id='transform_data',
         image='ghcr.io/dbt-labs/dbt-postgres:1.9.latest',
-        command='run',
+        command='build',
         working_dir='/usr/app',
-        Mounts=[      
+        mounts=[      
             Mount(
                 source='/home/bern/repo_wsl/cx-txn-demo/dbt/cx_txn_dbt',
                 target='/usr/app',
@@ -41,10 +40,15 @@ with dag:
             Mount(
                 source='/home/bern/repo_wsl/cx-txn-demo/dbt',
                 target='/root/.dbt/]',
-                type='bind')
+                type='bind'),
         ],
         network_mode='cx-txn-network',
         docker_url='unix://var/run/docker.sock',
         auto_remove='success'
 
+    )
+
+    task2 = PythonOperator(
+        task_id='ingest_csv',
+        python_callable=extract_data.main
     )

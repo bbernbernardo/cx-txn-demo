@@ -13,42 +13,46 @@ services:
       - ./postgres/postgres_init.sql:/docker-entrypoint-initdb.d/postgres_init.sql
     networks:
       - cx-txn-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U db_user"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    # healthcheck:
+    #   test: ["CMD-SHELL", "pg_isready -U cx_txn"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
     
-  # dbt:
-  #   container_name: dbt
-  #   image: ghcr.io/dbt-labs/dbt-postgres:1.9.latest
-  #   volumes:
-  #     - ./dbt/cx_txn_dbt:/usr/app
-  #     - ./dbt/:/root/.dbt/
-  #   working_dir: /usr/app
-  #   depends_on:
-  #     - cx-txn-db
-  #   networks:
-  #     - cx-txn-network
-  #   command: init cx_txn_dbt
-
   dbt:
-    image: ghcr.io/dbt-labs/dbt-postgres:1.9.latest
     container_name: dbt
-    depends_on:
-      cx-txn-db:
-        condition: service_healthy
-    environment:
-      DBT_PROFILES_DIR: /usr/app
+    image: ghcr.io/dbt-labs/dbt-postgres:1.9.latest
     volumes:
-      - ./dbt/cx_txn_dbt:/usr/app  # <-- mount your dbt project folder here
+      - ./dbt/cx_txn_dbt:/usr/app
+      - ./dbt/:/root/.dbt/
     working_dir: /usr/app
+    depends_on:
+      - cx-txn-db
     networks:
       - cx-txn-network
-    entrypoint: ["/bin/bash", "-c"]
-    command: ["dbt debug && tail -f /dev/null"]
-    # You can override command to run your models:
-    # command: ["dbt run"]
+    command: build
+    
+    # entrypoint: ["/bin/bash", "-c"]
+    # command: ["dbt build"]
+  # dbt:
+  #   image: ghcr.io/dbt-labs/dbt-postgres:1.9.latest
+  #   container_name: dbt
+  #   depends_on:
+  #     - cx-txn-db
+  #     # cx-txn-db:
+  #     #   condition: service_healthy
+  #   # environment:
+  #   #   DBT_PROFILES_DIR: /usr/app
+  #   volumes:
+  #     - ./dbt/cx_txn_dbt:/usr/app  # <-- mount your dbt project folder here
+  #     - ./dbt/:/root/.dbt/
+  #   working_dir: /usr/app
+  #   networks:
+  #     - cx-txn-network
+  #   entrypoint: ["/bin/bash", "-c"]
+  #   command: ["tail -f /dev/null"]
+  #   # You can override command to run your models:
+  #   # command: ["dbt run"]
 
 
   airflow:
@@ -59,6 +63,8 @@ services:
       - 8080:8080
     environment:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://db_user:db_password@cx-txn-db:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       # - ./airflow/logs:/opt/airflow/logs
@@ -66,6 +72,7 @@ services:
       # - ./airflow/plugins:/plugins:/opt/airflow/plugins
       - ./scripts:/opt/airflow/scripts
       - ./import/csv:/import/csv
+      - ./dbt/cx_txn_dbt:/usr/app
     entrypoint: >
       bash -c "
       airflow db migrate && airflow api-server & airflow scheduler
